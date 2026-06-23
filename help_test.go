@@ -213,6 +213,13 @@ func TestMan(t *testing.T) {
 	defer oldEnv.Restore()
 	os.Setenv("ENV_DEFAULT", "env-def")
 
+	const sourceDate = "2004-10-20T00:00:00Z"
+	sourceDateParsed, err := time.Parse(time.RFC3339, sourceDate)
+	if err != nil {
+		t.Fatalf("Failed to parse source date: %s", err)
+	}
+	os.Setenv("SOURCE_DATE_EPOCH", fmt.Sprintf("%d", sourceDateParsed.Unix()))
+
 	var opts helpOptions
 	p := NewNamedParser("TestMan", HelpFlag)
 	p.ShortDescription = "Test manpage generation"
@@ -227,8 +234,6 @@ func TestMan(t *testing.T) {
 	p.WriteManPage(&buf)
 
 	got := buf.String()
-
-	tt := time.Now()
 
 	var envDefaultName string
 
@@ -335,7 +340,7 @@ A sub command
 .TP
 \fB\fB\-\-opt\fR\fP
 This is a sub command option
-`, tt.Format("2 January 2006"), envDefaultName)
+`, sourceDateParsed.Format("2 January 2006"), envDefaultName)
 
 	assertDiff(t, got, expected, "man page")
 }
